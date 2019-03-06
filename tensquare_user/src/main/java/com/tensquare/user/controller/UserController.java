@@ -1,4 +1,5 @@
 package com.tensquare.user.controller;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -19,6 +20,8 @@ import com.tensquare.user.service.UserService;
 import entity.PageResult;
 import entity.Result;
 import entity.StatusCode;
+import util.JwtUtil;
+
 /**
  * 控制器层
  * @author Administrator
@@ -31,6 +34,8 @@ public class UserController {
 
 	@Autowired
 	private UserService userService;
+	@Autowired
+	private JwtUtil jwtUtil;
 
 	@Autowired
 	private RedisTemplate redisTemplate;
@@ -40,7 +45,11 @@ public class UserController {
 		if (user ==null) {
 			return new Result(false, StatusCode.ERROR, "登录失败");
 		}
-		return new Result(true,StatusCode.OK,"登录成功");
+		String token = jwtUtil.createJWT(user.getId(), user.getMobile(), "user");
+		Map<String,Object> map = new HashMap<>();
+		map.put("token",token);
+		map.put("roles",user);
+		return new Result(true,StatusCode.OK,"登录成功",map);
 	}
 	@RequestMapping(value = "/sendsms/{mobile}",method =RequestMethod.POST)
 	public Result sendSms(@PathVariable String mobile){
@@ -125,7 +134,7 @@ public class UserController {
 	}
 	
 	/**
-	 * 删除
+	 * 删除 //必须有admin角色才能删除
 	 * @param id
 	 */
 	@RequestMapping(value="/{id}",method= RequestMethod.DELETE)
